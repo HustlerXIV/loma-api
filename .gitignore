@@ -1,0 +1,94 @@
+# Build results
+bin/
+obj/
+out/
+*.exe
+*.dll
+*.app
+*.log
+
+# User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Rider / JetBrains
+.idea/
+*.sln.iml
+
+# Visual Studio Code
+.vscode/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# Visual Studio for Mac
+*.userprefs
+
+# ASP.NET Scaffolding
+ScaffoldingReadMe.txt
+
+# NuGet
+*.nupkg
+*.snupkg
+.nuget/
+packages/
+*.nuspec
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# Logs
+*.log
+logs/
+*.tld
+
+# Secrets
+secrets.json
+appsettings.Development.json
+appsettings.*.local.json
+
+# Docker
+*.pid
+*.seed
+*.swp
+*.swo
+docker-compose.override.yml
+
+# Coverage
+coverage/
+coverage.cobertura.xml
+TestResults/
+*.coverage
+*.coveragexml
+
+# System
+.DS_Store
+Thumbs.db
+
+# Resharper
+_ReSharper*/
+*.[Rr]e[Ss]harper
+*.DotSettings.user
+
+# Backup & cache
+*.bak
+*.cache
+*.temp
+*.tmp
+
+# SQL
+*.mdf
+*.ldf
+*.ndf
+
+# EF Core migrations snapshot (if generated)
+Migrations/
+
+# Node.js (if frontend included in same repo)
+node_modules/
+npm-debug.log
+yarn-error.log
