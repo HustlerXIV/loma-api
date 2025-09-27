@@ -55,4 +55,10 @@ public class ShareTokenService : IShareTokenService
             Link = location.Link
         };
     }
+
+    public async Task<bool> RevokeAsync(string token, Guid userId)
+    {
+        var rows = await _repo.RevokeAsync(token, userId);
+        return rows > 0;
+    }
 }

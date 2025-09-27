@@ -35,4 +35,15 @@ public class ShareTokenRepository
         var sql = "UPDATE share_tokens SET used_at = SYSDATETIME() WHERE token = @Token AND used_at IS NULL";
         await _db.ExecuteAsync(sql, new { Token = token });
     }
+
+    public async Task<int> RevokeAsync(string token, Guid userId)
+    {
+        var sql = @"UPDATE share_tokens 
+                    SET revoked_at = SYSDATETIME()
+                    WHERE token = @Token 
+                    AND user_id = @UserId
+                    AND used_at IS NULL
+                    AND revoked_at IS NULL";
+        return await _db.ExecuteAsync(sql, new { Token = token, UserId = userId });
+    }
 }

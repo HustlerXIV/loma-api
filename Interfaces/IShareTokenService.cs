@@ -6,4 +6,5 @@ public interface IShareTokenService
 {
     Task<ShareTokenResponse> GenerateAsync(Guid userId, CreateShareTokenRequest request);
     Task<RedirectResponse?> RedirectAsync(string token);
+    Task<bool> RevokeAsync(string token, Guid userId);
 }
