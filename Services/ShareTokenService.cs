@@ -19,8 +19,6 @@ public class ShareTokenService : IShareTokenService
     public async Task<ShareTokenResponse> GenerateAsync(Guid userId, CreateShareTokenRequest request)
     {
 
-        Console.WriteLine($"userid::--:{userId}");
-        Console.WriteLine($"LocationId::--:{request.LocationId}");
         var token = new ShareToken
         {
             Id = Guid.NewGuid(),
@@ -42,12 +40,9 @@ public class ShareTokenService : IShareTokenService
 
     public async Task<RedirectResponse?> RedirectAsync(string token)
     {
-        Console.WriteLine($"service::: {token}");
-
         var shareToken = await _repo.GetValidTokenAsync(token);
         if (shareToken == null) return null;
 
-Console.WriteLine($"shareToken::: {JsonSerializer.Serialize(shareToken)}");
         var location = await _locationRepo.GetByIdAsync(shareToken.LocationId);
         if (location == null) return null;
 

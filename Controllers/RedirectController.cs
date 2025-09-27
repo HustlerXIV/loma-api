@@ -20,7 +20,6 @@ public class RedirectController : ControllerBase
     [AllowAnonymous]
     public async Task<IActionResult> RedirectToLocation(string token)
     {
-        Console.WriteLine($"controler::: {token}");
         var result = await _service.RedirectAsync(token);
         if (result == null)
             return BadRequest(new { message = "Invalid or expired token" });
