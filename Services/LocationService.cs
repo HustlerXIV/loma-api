@@ -8,10 +8,12 @@ namespace loma_api.Services;
 public class LocationService : ILocationService
 {
     private readonly LocationRepository _repo;
+    private readonly IAuditLogService _auditLog;
 
-    public LocationService(LocationRepository repo)
+    public LocationService(LocationRepository repo, IAuditLogService auditLog)
     {
         _repo = repo;
+        _auditLog = auditLog;
     }
 
     public async Task<LocationResponse> CreateAsync(Guid userId, CreateLocationRequest request)
@@ -34,6 +36,8 @@ public class LocationService : ILocationService
 
         await _repo.CreateAsync(location);
 
+        await _auditLog.LogAsync(userId, "CREATE_LOCATION", "User created a new location", new { location.Id, location.Name });
+
         return new LocationResponse
         {
             Id = location.Id,
@@ -51,6 +55,14 @@ public class LocationService : ILocationService
     public async Task<IEnumerable<LocationResponse>> GetAllAsync(Guid userId)
     {
         var locations = await _repo.GetByUserIdAsync(userId);
+
+        await _auditLog.LogAsync(
+            userId,
+            "GET_LOCATIONS",
+            "User retrieved all locations",
+            new { Count = locations.Count() }
+        );
+        
         return locations.Select(l => new LocationResponse
         {
             Id = l.Id,

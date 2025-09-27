@@ -13,11 +13,13 @@ public class AuthService : IAuthService
 {
     private readonly UserRepository _userRepo;
     private readonly IConfiguration _config;
+    private readonly IAuditLogService _auditLog;
 
-    public AuthService(UserRepository userRepo, IConfiguration config)
+    public AuthService(UserRepository userRepo, IConfiguration config, IAuditLogService auditLog)
     {
         _userRepo = userRepo;
         _config = config;
+        _auditLog = auditLog;
     }
 
     public async Task<string> RegisterAsync(RegisterRequest request)
@@ -51,6 +53,8 @@ public class AuthService : IAuthService
             throw new Exception("Invalid credentials");
 
         var token = GenerateJwtToken(user);
+
+        await _auditLog.LogAsync(user.Id, "LOGIN_SUCCESS", "User logged in", new { request.Email });
 
         return new LoginResponse
         {
