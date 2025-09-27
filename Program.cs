@@ -27,10 +27,12 @@ builder.Services.AddScoped<IDbConnection>(sp =>
 builder.Services.AddScoped<UserRepository>();
 builder.Services.AddScoped<LocationRepository>();
 builder.Services.AddScoped<ShareTokenRepository>();
+builder.Services.AddScoped<SurveyRepository>();
 
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ILocationService, LocationService>();
 builder.Services.AddScoped<IShareTokenService, ShareTokenService>();
+builder.Services.AddScoped<ISurveyService, SurveyService>();
 
 var jwt = builder.Configuration.GetSection("Jwt");
 var key = Encoding.UTF8.GetBytes(jwt["Key"]!);
