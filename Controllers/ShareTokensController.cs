@@ -24,4 +24,15 @@ public class ShareTokensController : ControllerBase
         var result = await _service.GenerateAsync(User.GetUserId(), request);
         return Ok(result);
     }
+
+    [HttpPost("{token}/revoke")]
+    [Authorize]
+    public async Task<IActionResult> Revoke(string token)
+    {
+        var success = await _service.RevokeAsync(token, User.GetUserId());
+        if (!success) 
+            return BadRequest(new { message = "Token invalid, already used, or already revoked" });
+
+        return Ok(new { message = "Token revoked successfully" });
+    }
 }
