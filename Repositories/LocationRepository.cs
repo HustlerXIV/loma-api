@@ -33,4 +33,10 @@ public class LocationRepository
         var sql = "DELETE FROM locations WHERE id = @Id AND user_id = @UserId";
         return await _db.ExecuteAsync(sql, new { Id = id, UserId = userId });
     }
+
+    public async Task<Location?> GetByIdAsync(Guid id)
+    {
+        var sql = "SELECT * FROM locations WHERE id = @Id";
+        return await _db.QueryFirstOrDefaultAsync<Location>(sql, new { Id = id });
+    }
 }
