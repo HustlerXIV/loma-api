@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using loma_api.Dtos;
 using loma_api.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 
 namespace loma_api.Controllers;
 
@@ -16,6 +17,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("register")]
+    [AllowAnonymous]
     public async Task<IActionResult> Register(RegisterRequest request)
     {
         try
@@ -30,6 +32,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("login")]
+    [AllowAnonymous]
     public async Task<ActionResult<LoginResponse>> Login(LoginRequest request)
     {
         try
