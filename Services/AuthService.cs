@@ -1,6 +1,7 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using Google.Apis.Auth;
 using loma_api.Dtos;
 using loma_api.Interfaces;
 using loma_api.Models;
@@ -22,6 +23,24 @@ public class AuthService : IAuthService
         _auditLog = auditLog;
     }
 
+    // -------------------- LOCAL LOGIN --------------------
+    public async Task<LoginResponse> LoginAsync(LoginRequest request)
+    {
+        var user = await _userRepo.GetByEmailAsync(request.Email);
+        if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.Password))
+            throw new Exception("Invalid credentials");
+
+        var token = GenerateJwtToken(user);
+        // await _auditLog.LogAsync(user.Id, "LOGIN_SUCCESS", "User logged in", new { request.Email });
+
+        return new LoginResponse
+        {
+            Token = token,
+            FullName = user.FullName
+        };
+    }
+
+    // -------------------- REGISTER --------------------
     public async Task<string> RegisterAsync(RegisterRequest request)
     {
         var existing = await _userRepo.GetByEmailAsync(request.Email);
@@ -38,7 +57,8 @@ public class AuthService : IAuthService
             FullName = request.FullName,
             IsActive = true,
             CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
+            UpdatedAt = DateTime.UtcNow,
+            Provider = "local"
         };
 
         await _userRepo.CreateAsync(newUser);
@@ -46,15 +66,35 @@ public class AuthService : IAuthService
         return "User registered successfully";
     }
 
-    public async Task<LoginResponse> LoginAsync(LoginRequest request)
+    // -------------------- GOOGLE LOGIN --------------------
+    public async Task<LoginResponse> GoogleLoginAsync(string googleToken)
     {
-        var user = await _userRepo.GetByEmailAsync(request.Email);
-        if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.Password))
-            throw new Exception("Invalid credentials");
+        var payload = await GoogleJsonWebSignature.ValidateAsync(googleToken);
+        var email = payload.Email;
+        var name = payload.Name;
+        var providerId = payload.Subject;
+
+        var user = await _userRepo.GetByEmailAsync(email);
+
+        if (user == null)
+        {
+            user = new User
+            {
+                Id = Guid.NewGuid(),
+                Email = email,
+                FullName = name,
+                Provider = "google",
+                ProviderId = providerId,
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+            await _userRepo.CreateAsync(user);
+        }
 
         var token = GenerateJwtToken(user);
 
-        await _auditLog.LogAsync(user.Id, "LOGIN_SUCCESS", "User logged in", new { request.Email });
+        // await _auditLog.LogAsync(user.Id, "LOGIN_GOOGLE", "User logged in via Google", new { email });
 
         return new LoginResponse
         {
@@ -63,6 +103,7 @@ public class AuthService : IAuthService
         };
     }
 
+    // -------------------- JWT GENERATOR --------------------
     private string GenerateJwtToken(User user)
     {
         var jwt = _config.GetSection("Jwt");
@@ -73,7 +114,8 @@ public class AuthService : IAuthService
         {
             new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
             new Claim(JwtRegisteredClaimNames.Email, user.Email),
-            new Claim("fullName", user.FullName)
+            new Claim("fullName", user.FullName),
+            new Claim("provider", user.Provider ?? "local")
         };
 
         var token = new JwtSecurityToken(

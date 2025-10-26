@@ -1,8 +1,8 @@
+using loma_api.Dtos;
+using loma_api.Extensions;
+using loma_api.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using loma_api.Dtos;
-using loma_api.Interfaces;
-using loma_api.Extensions;
 
 namespace loma_api.Controllers;
 
@@ -38,5 +38,28 @@ public class LocationsController : ControllerBase
         var success = await _service.DeleteAsync(id, User.GetUserId());
         if (!success) return NotFound(new { message = "Location not found or not owned by user" });
         return Ok(new { message = "Location deleted" });
+    }
+
+    [HttpGet("{id:guid}")]
+    public async Task<IActionResult> GetById(Guid id)
+    {
+        var userId = User.GetUserId();
+        var location = await _service.GetByIdAsync(id, userId);
+        if (location == null)
+            return NotFound();
+
+        return Ok(location);
+    }
+
+    [HttpPut("{id:guid}")]
+    public async Task<IActionResult> UpdateLocation(Guid id, [FromBody] UpdateLocationRequest request)
+    {
+        var userId = User.GetUserId();
+        var updated = await _service.UpdateAsync(id, userId, request);
+
+        if (updated == null)
+            return NotFound();
+
+        return Ok(updated);
     }
 }

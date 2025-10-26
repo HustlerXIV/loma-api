@@ -8,12 +8,10 @@ namespace loma_api.Services;
 public class LocationService : ILocationService
 {
     private readonly LocationRepository _repo;
-    private readonly IAuditLogService _auditLog;
 
-    public LocationService(LocationRepository repo, IAuditLogService auditLog)
+    public LocationService(LocationRepository repo)
     {
         _repo = repo;
-        _auditLog = auditLog;
     }
 
     public async Task<LocationResponse> CreateAsync(Guid userId, CreateLocationRequest request)
@@ -36,8 +34,6 @@ public class LocationService : ILocationService
 
         await _repo.CreateAsync(location);
 
-        await _auditLog.LogAsync(userId, "CREATE_LOCATION", "User created a new location", new { location.Id, location.Name });
-
         return new LocationResponse
         {
             Id = location.Id,
@@ -52,34 +48,87 @@ public class LocationService : ILocationService
         };
     }
 
+    public async Task<LocationResponse?> GetByIdAsync(Guid id, Guid userId)
+    {
+        var location = await _repo.GetByIdWithUserIdAsync(id, userId);
+        if (location == null)
+            return null;
+
+        return MapToResponse(location);
+    }
+
     public async Task<IEnumerable<LocationResponse>> GetAllAsync(Guid userId)
     {
         var locations = await _repo.GetByUserIdAsync(userId);
 
-        await _auditLog.LogAsync(
-            userId,
-            "GET_LOCATIONS",
-            "User retrieved all locations",
-            new { Count = locations.Count() }
-        );
-        
-        return locations.Select(l => new LocationResponse
-        {
-            Id = l.Id,
-            Name = l.Name,
-            Description = l.Description,
-            Latitude = l.Latitude,
-            Longitude = l.Longitude,
-            PlaceId = l.PlaceId,
-            AddressLine = l.AddressLine,
-            Link = l.Link,
-            IsFavorite = l.IsFavorite
-        });
+        return locations
+            .OrderByDescending(l => l.IsFavorite)
+            .ThenBy(l => l.Name)
+            .Select(l => new LocationResponse
+            {
+                Id = l.Id,
+                Name = l.Name,
+                Description = l.Description,
+                Latitude = l.Latitude,
+                Longitude = l.Longitude,
+                PlaceId = l.PlaceId,
+                AddressLine = l.AddressLine,
+                Link = l.Link,
+                IsFavorite = l.IsFavorite
+            });
     }
+
+    public async Task<LocationResponse?> UpdateAsync(Guid id, Guid userId, UpdateLocationRequest request)
+    {
+        var existing = await _repo.GetByIdWithUserIdAsync(id, userId);
+        if (existing == null)
+            return null;
+
+        existing.Name = request.Name;
+        existing.Description = request.Description;
+        existing.Latitude = request.Latitude;
+        existing.Longitude = request.Longitude;
+        existing.PlaceId = request.PlaceId;
+        existing.AddressLine = request.AddressLine;
+        existing.Link = request.Link;
+        existing.IsFavorite = request.IsFavorite;
+        existing.UpdatedAt = DateTime.UtcNow;
+
+        var affectedRows = await _repo.UpdateAsync(existing, userId);
+        if (affectedRows == 0)
+            return null;
+
+        return new LocationResponse
+        {
+            Id = existing.Id,
+            Name = existing.Name,
+            Description = existing.Description,
+            Latitude = existing.Latitude,
+            Longitude = existing.Longitude,
+            PlaceId = existing.PlaceId,
+            AddressLine = existing.AddressLine,
+            Link = existing.Link,
+            IsFavorite = existing.IsFavorite
+        };
+    }
+
 
     public async Task<bool> DeleteAsync(Guid id, Guid userId)
     {
         var rows = await _repo.DeleteAsync(id, userId);
         return rows > 0;
     }
+
+    private static LocationResponse MapToResponse(Location l) => new()
+    {
+        Id = l.Id,
+        Name = l.Name,
+        Description = l.Description,
+        Latitude = l.Latitude,
+        Longitude = l.Longitude,
+        PlaceId = l.PlaceId,
+        AddressLine = l.AddressLine,
+        Link = l.Link,
+        IsFavorite = l.IsFavorite
+    };
 }

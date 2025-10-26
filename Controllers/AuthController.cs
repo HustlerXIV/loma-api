@@ -45,4 +45,16 @@ public class AuthController : ControllerBase
             return Unauthorized(new { message = ex.Message });
         }
     }
+
+    [AllowAnonymous]
+    [HttpPost("google-login")]
+    public async Task<IActionResult> GoogleLogin([FromHeader(Name = "Authorization")] string authHeader)
+    {
+        if (string.IsNullOrEmpty(authHeader) || !authHeader.StartsWith("Bearer "))
+            return Unauthorized();
+
+        var googleToken = authHeader.Substring("Bearer ".Length);
+        var result = await _authService.GoogleLoginAsync(googleToken);
+        return Ok(result);
+    }
 }
