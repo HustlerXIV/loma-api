@@ -15,7 +15,7 @@ public class UserRepository
 
     public async Task<User?> GetByEmailAsync(string email)
     {
-        var sql = "SELECT * FROM users WHERE email = @Email AND is_active = 1";
+        var sql = "SELECT * FROM users WHERE email = @Email AND is_active = TRUE";
         return await _db.QueryFirstOrDefaultAsync<User>(sql, new { Email = email });
     }
 

@@ -1,0 +1,100 @@
+-- Enable UUID generator function
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+
+-- ===========================
+-- USERS
+-- ===========================
+CREATE TABLE users (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    email VARCHAR(255) NOT NULL UNIQUE,
+    password VARCHAR(255),
+    full_name VARCHAR(255),
+    provider VARCHAR(50),              -- e.g. 'google' or 'local'
+    provider_id VARCHAR(255),          -- Google sub ID
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- ===========================
+-- SURVEY QUESTIONS
+-- ===========================
+CREATE TABLE survey_questions (
+    id SERIAL PRIMARY KEY,
+    text_question TEXT NOT NULL,
+    question_type VARCHAR(50) NOT NULL,
+    is_required BOOLEAN NOT NULL DEFAULT TRUE,
+    section VARCHAR(255),
+    display_order INT NOT NULL,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- ===========================
+-- SURVEY ANSWERS
+-- ===========================
+CREATE TABLE survey_answers (
+    id SERIAL PRIMARY KEY,
+    user_id UUID,
+    question_id INT NOT NULL,
+    answer TEXT,
+    answered_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT fk_survey_answers_user FOREIGN KEY (user_id) REFERENCES users(id),
+    CONSTRAINT fk_survey_answers_question FOREIGN KEY (question_id) REFERENCES survey_questions(id)
+);
+
+-- ===========================
+-- LOCATIONS
+-- ===========================
+CREATE TABLE locations (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    latitude DECIMAL(10,7) NOT NULL,
+    longitude DECIMAL(10,7) NOT NULL,
+    place_id VARCHAR(255),
+    address_line TEXT,
+    link TEXT,
+    is_favorite BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT fk_locations_users FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+CREATE INDEX idx_locations_user_id ON locations(user_id);
+CREATE INDEX idx_locations_user_favorite ON locations(user_id, is_favorite);
+
+-- ===========================
+-- SHARE TOKENS
+-- ===========================
+CREATE TABLE share_tokens (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL,
+    location_id UUID NOT NULL,
+    token TEXT NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    expires_at TIMESTAMPTZ NOT NULL,
+    used_at TIMESTAMPTZ,
+    revoked_at TIMESTAMPTZ,
+    CONSTRAINT fk_share_tokens_user FOREIGN KEY (user_id) REFERENCES users(id),
+    CONSTRAINT fk_share_tokens_location FOREIGN KEY (location_id) REFERENCES locations(id)
+);
+
+CREATE INDEX idx_share_tokens_user_id ON share_tokens(user_id);
+CREATE INDEX idx_share_tokens_location_id ON share_tokens(location_id);
+CREATE INDEX idx_share_tokens_expires_at ON share_tokens(expires_at);
+CREATE INDEX idx_share_tokens_user_created ON share_tokens(user_id, created_at);
+
+CREATE TABLE audit_logs (
+    id BIGSERIAL PRIMARY KEY,
+    user_id UUID NULL,
+    action VARCHAR(100) NOT NULL,
+    purpose TEXT NULL,
+    metadata JSONB NULL,
+    occurred_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Indexes
+CREATE INDEX idx_audit_logs_user_id ON audit_logs(user_id);
+CREATE INDEX idx_audit_logs_occurred_at ON audit_logs(occurred_at);
