@@ -1,6 +1,11 @@
 using loma_api.Dtos;
+using loma_api.Interfaces;
 using loma_api.Models;
 using loma_api.Repositories;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 namespace loma_api.Services;
 
@@ -8,37 +13,45 @@ public class ShareTokenService : IShareTokenService
 {
     private readonly ShareTokenRepository _repo;
     private readonly LocationRepository _locationRepo;
-    private readonly IAuditLogService _auditLog;
+    private readonly ILocationService _locationService;
+    private readonly IConfiguration _config;
 
     public ShareTokenService(
         ShareTokenRepository repo,
         LocationRepository locationRepo,
-        IAuditLogService auditLog)
+        ILocationService locationService,
+        IConfiguration config
+        )
     {
         _repo = repo;
         _locationRepo = locationRepo;
-        _auditLog = auditLog;
+        _locationService = locationService;
+        _config = config;
     }
 
-    public async Task<ShareTokenResponse> GenerateAsync(Guid userId, CreateShareTokenRequest request)
+   public async Task<ShareTokenResponse> GenerateAsync(Guid userId, CreateShareTokenRequest request)
     {
+        var jwtToken = GenerateShareJwtToken(userId, request.LocationId);
+
         var token = new ShareToken
         {
             Id = Guid.NewGuid(),
             UserId = userId,
             LocationId = request.LocationId,
-            Token = Guid.NewGuid().ToString("N"),
+            Token = jwtToken,
             CreatedAt = DateTime.UtcNow,
             ExpiresAt = DateTime.UtcNow.AddMinutes(15)
         };
 
-        await _repo.CreateAsync(token);
+        var location = await _locationService.GetByIdAsync(request.LocationId, userId);
+        if (location == null)
+            throw new Exception("Location not found or unauthorized.");
 
-        await _auditLog.LogAsync(userId, "SHARETOKEN_GENERATED", "User generated a share token", 
-            new { token.Id, token.LocationId, token.ExpiresAt });
+        await _repo.CreateAsync(token);
 
         return new ShareTokenResponse
         {
+            Name = location.Name,
             Token = token.Token,
             ExpiresAt = token.ExpiresAt
         };
@@ -49,21 +62,16 @@ public class ShareTokenService : IShareTokenService
         var shareToken = await _repo.GetValidTokenAsync(token);
         if (shareToken == null)
         {
-            await _auditLog.LogAsync(null, "SHARETOKEN_REDIRECT_FAILED", "Invalid or expired token", new { token });
             return null;
         }
 
         var location = await _locationRepo.GetByIdAsync(shareToken.LocationId);
         if (location == null)
         {
-            await _auditLog.LogAsync(shareToken.UserId, "SHARETOKEN_REDIRECT_FAILED", "Location not found", new { token });
             return null;
         }
 
         await _repo.MarkAsUsedAsync(token);
-
-        await _auditLog.LogAsync(shareToken.UserId, "SHARETOKEN_REDIRECT_SUCCESS", "Token redeemed", 
-            new { shareToken.Id, shareToken.LocationId });
 
         return new RedirectResponse
         {
@@ -79,11 +87,32 @@ public class ShareTokenService : IShareTokenService
 
         if (rows > 0)
         {
-            await _auditLog.LogAsync(userId, "SHARETOKEN_REVOKED", "User revoked a share token", new { token });
             return true;
         }
 
-        await _auditLog.LogAsync(userId, "SHARETOKEN_REVOKE_FAILED", "Failed to revoke token", new { token });
         return false;
+    }
+
+    private string GenerateShareJwtToken(Guid userId, Guid locationId)
+    {
+        var jwt = _config.GetSection("Jwt");
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwt["Key"]!));
+        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+        var claims = new[]
+        {
+            new Claim("userId", userId.ToString()),
+            new Claim("locationId", locationId.ToString())
+        };
+
+        var token = new JwtSecurityToken(
+            issuer: jwt["Issuer"],
+            audience: jwt["Audience"],
+            claims: claims,
+            expires: DateTime.UtcNow.AddMinutes(15),
+            signingCredentials: creds
+        );
+
+        return new JwtSecurityTokenHandler().WriteToken(token);
     }
 }

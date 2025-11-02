@@ -6,5 +6,5 @@ namespace loma_api.Services;
 public interface ISurveyService
 {
     Task<IEnumerable<SurveyQuestion>> GetQuestionsAsync();
-    Task SaveAnswersAsync(SurveyAnswerBatchRequest request);
+    Task SaveAnswersAsync(SurveyAnswerBatchRequest request, Guid userId);
 }

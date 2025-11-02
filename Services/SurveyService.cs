@@ -18,13 +18,13 @@ public class SurveyService : ISurveyService
         return await _repo.GetActiveQuestionsAsync();
     }
 
-    public async Task SaveAnswersAsync(SurveyAnswerBatchRequest request)
+    public async Task SaveAnswersAsync(SurveyAnswerBatchRequest request, Guid userId)
     {
         foreach (var ans in request.Answers)
         {
             var answer = new SurveyAnswer
             {
-                UserId = request.UserId,
+                UserId = userId,
                 QuestionId = ans.QuestionId,
                 Answer = ans.Answer,
                 AnsweredAt = DateTime.UtcNow
