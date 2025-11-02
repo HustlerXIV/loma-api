@@ -26,20 +26,20 @@ public class ShareTokenRepository
         var sql = @"SELECT * FROM share_tokens 
                     WHERE token = @Token 
                       AND used_at IS NULL 
-                      AND expires_at > SYSDATETIME()";
+                      AND expires_at > NOW()";
         return await _db.QueryFirstOrDefaultAsync<ShareToken>(sql, new { Token = token });
     }
 
     public async Task MarkAsUsedAsync(string token)
     {
-        var sql = "UPDATE share_tokens SET used_at = SYSDATETIME() WHERE token = @Token AND used_at IS NULL";
+        var sql = "UPDATE share_tokens SET used_at = NOW() WHERE token = @Token AND used_at IS NULL";
         await _db.ExecuteAsync(sql, new { Token = token });
     }
 
     public async Task<int> RevokeAsync(string token, Guid userId)
     {
         var sql = @"UPDATE share_tokens 
-                    SET revoked_at = SYSDATETIME()
+                    SET revoked_at = NOW()
                     WHERE token = @Token 
                     AND user_id = @UserId
                     AND used_at IS NULL

@@ -15,9 +15,12 @@ public class SurveyRepository
 
     public async Task<IEnumerable<SurveyQuestion>> GetActiveQuestionsAsync()
     {
-        var sql = @"SELECT * FROM survey_questions 
-                    WHERE is_active = 1 
-                    ORDER BY section, display_order";
+        const string sql = @"
+            SELECT id, text_question, question_type, section, display_order, is_active
+            FROM survey_questions
+            WHERE is_active = TRUE
+            ORDER BY display_order;
+        ";
         return await _db.QueryAsync<SurveyQuestion>(sql);
     }
 

@@ -14,16 +14,13 @@ public class AuthService : IAuthService
 {
     private readonly UserRepository _userRepo;
     private readonly IConfiguration _config;
-    private readonly IAuditLogService _auditLog;
 
-    public AuthService(UserRepository userRepo, IConfiguration config, IAuditLogService auditLog)
+    public AuthService(UserRepository userRepo, IConfiguration config)
     {
         _userRepo = userRepo;
         _config = config;
-        _auditLog = auditLog;
     }
 
-    // -------------------- LOCAL LOGIN --------------------
     public async Task<LoginResponse> LoginAsync(LoginRequest request)
     {
         var user = await _userRepo.GetByEmailAsync(request.Email);
@@ -31,7 +28,6 @@ public class AuthService : IAuthService
             throw new Exception("Invalid credentials");
 
         var token = GenerateJwtToken(user);
-        // await _auditLog.LogAsync(user.Id, "LOGIN_SUCCESS", "User logged in", new { request.Email });
 
         return new LoginResponse
         {
@@ -94,8 +90,6 @@ public class AuthService : IAuthService
 
         var token = GenerateJwtToken(user);
 
-        // await _auditLog.LogAsync(user.Id, "LOGIN_GOOGLE", "User logged in via Google", new { email });
-
         return new LoginResponse
         {
             Token = token,
@@ -103,7 +97,6 @@ public class AuthService : IAuthService
         };
     }
 
-    // -------------------- JWT GENERATOR --------------------
     private string GenerateJwtToken(User user)
     {
         var jwt = _config.GetSection("Jwt");

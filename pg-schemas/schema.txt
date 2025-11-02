@@ -98,3 +98,37 @@ CREATE TABLE audit_logs (
 -- Indexes
 CREATE INDEX idx_audit_logs_user_id ON audit_logs(user_id);
 CREATE INDEX idx_audit_logs_occurred_at ON audit_logs(occurred_at);
+
+-- Seed survey questions
+INSERT INTO survey_questions (text_question, question_type, section, display_order)
+VALUES ('ฉันเข้าใจชัดเจนว่าคิวอาร์จะหมดอายุภายใน 15 นาที', 'likert_5', 'ความเข้าใจคอนเซ็ปต์', 1);
+
+INSERT INTO survey_questions (text_question, question_type, section, display_order)
+VALUES ('หลังสแกนแล้ว คิวอาร์โค้ดเดิมไม่สามารถนำกลับมาใช้ซ้ำได้', 'likert_5', 'ความเข้าใจคอนเซ็ปต์', 2);
+
+INSERT INTO survey_questions (text_question, question_type, section, display_order)
+VALUES ('ระบบนี้ช่วยลดขั้นตอนการแชร์โลเคชันเมื่อเทียบกับวิธีอื่น ๆ', 'likert_5', 'ความง่ายในการใช้งาน', 3);
+
+INSERT INTO survey_questions (text_question, question_type, section, display_order)
+VALUES ('ข้อความและปุ่มต่าง ๆ ในระบบเข้าใจง่าย', 'likert_5', 'ความง่ายในการใช้งาน', 4);
+
+INSERT INTO survey_questions (text_question, question_type, section, display_order)
+VALUES ('ฉันสามารถสร้างและแชร์คิวอาร์ได้ภายในไม่กี่ขั้นตอน', 'likert_5', 'ความง่ายในการใช้งาน', 5);
+
+INSERT INTO survey_questions (text_question, question_type, section, display_order)
+VALUES ('ลิงก์ที่สร้างไม่มีส่วนที่เปิดเผยข้อมูลส่วนตัวหรือพิกัดโดยตรง', 'likert_5', 'ความปลอดภัยและความเป็นส่วนตัว', 6);
+
+INSERT INTO survey_questions (text_question, question_type, section, display_order)
+VALUES ('ฉันมั่นใจว่าระบบไม่เปิดเผยพิกัดหลังคิวอาร์หมดอายุ', 'likert_5', 'ความปลอดภัยและความเป็นส่วนตัว', 7);
+
+INSERT INTO survey_questions (text_question, question_type, section, display_order)
+VALUES ('โดยรวมแล้วฉันพึงพอใจกับระบบนี้', 'likert_5', 'ความพึงพอใจโดยรวม', 8);
+
+INSERT INTO survey_questions (text_question, question_type, section, display_order)
+VALUES ('คุณจะแนะนำระบบนี้ให้ผู้อื่นมากน้อยเพียงใด (0–10)', 'nps_11', 'ความพึงพอใจโดยรวม', 9);
+
+INSERT INTO survey_questions (text_question, question_type, section, display_order)
+VALUES ('มีปัญหา/อุปสรรคใดที่พบระหว่างการใช้งานบ้าง', 'text', 'ข้อเสนอแนะ', 10);
+
+INSERT INTO survey_questions (text_question, question_type, section, display_order)
+VALUES ('คุณอยากให้ปรับปรุงหรือเพิ่มฟีเจอร์ใดเป็นพิเศษ', 'text', 'ข้อเสนอแนะ', 11);

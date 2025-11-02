@@ -1,7 +1,8 @@
+using loma_api.Dtos;
+using loma_api.Extensions;
+using loma_api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using loma_api.Dtos;
-using loma_api.Services;
 
 namespace loma_api.Controllers;
 
@@ -18,6 +19,7 @@ public class SurveyController : ControllerBase
     }
 
     [HttpGet("questions")]
+    [AllowAnonymous]
     public async Task<IActionResult> GetQuestions()
     {
         var questions = await _service.GetQuestionsAsync();
@@ -27,7 +29,7 @@ public class SurveyController : ControllerBase
     [HttpPost("answers")]
     public async Task<IActionResult> SubmitAnswers(SurveyAnswerBatchRequest request)
     {
-        await _service.SaveAnswersAsync(request);
+        await _service.SaveAnswersAsync(request, User.GetUserId());
         return Ok(new { message = "Answers submitted successfully" });
     }
 }
