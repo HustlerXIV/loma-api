@@ -7,8 +7,8 @@ using loma_api.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.HttpOverrides;
-using Npgsql;
 using Microsoft.IdentityModel.Tokens;
+using Npgsql;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -89,29 +89,34 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-// ✅ must be before HTTPS redirection
+app.Use(async (ctx, next) =>
+{
+    if (ctx.Request.Path == "/health")
+    {
+        ctx.Response.StatusCode = 200;
+        await ctx.Response.WriteAsync("ok");
+        return;
+    }
+    await next();
+});
+
 app.UseForwardedHeaders(new ForwardedHeadersOptions
 {
     ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
 });
 
-app.UseHttpsRedirection();
 app.UseCors("AllowFrontend");
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
 
-app.MapGet("/health", () => Results.Text("ok")).AllowAnonymous();
-
 app.MapGet("/health/db", async (IDbConnection db) =>
 {
     try
     {
-        if (db is DbConnection dbc)
-            await dbc.OpenAsync();
-        else
-            db.Open();
+        if (db is DbConnection dbc) await dbc.OpenAsync();
+        else db.Open();
 
         using var cmd = db.CreateCommand();
         cmd.CommandText = "SELECT 1";
@@ -127,10 +132,8 @@ app.MapGet("/health/db", async (IDbConnection db) =>
     {
         if (db.State == ConnectionState.Open)
         {
-            if (db is DbConnection dbc2)
-                await dbc2.CloseAsync();
-            else
-                db.Close();
+            if (db is DbConnection dbc2) await dbc2.CloseAsync();
+            else db.Close();
         }
     }
 }).AllowAnonymous();
