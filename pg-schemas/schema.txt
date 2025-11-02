@@ -132,3 +132,6 @@ VALUES ('มีปัญหา/อุปสรรคใดที่พบระ�
 
 INSERT INTO survey_questions (text_question, question_type, section, display_order)
 VALUES ('คุณอยากให้ปรับปรุงหรือเพิ่มฟีเจอร์ใดเป็นพิเศษ', 'text', 'ข้อเสนอแนะ', 11);
+
+INSERT INTO survey_questions (text_question, question_type, section, display_order)
+VALUES ('ช่วงอายุของคุณ', 'single_choice', 'ข้อมูลทั่วไป', 13);

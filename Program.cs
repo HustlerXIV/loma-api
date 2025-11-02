@@ -16,7 +16,6 @@ Dapper.DefaultTypeMap.MatchNamesWithUnderscores = true;
 
 var allowedOrigins = new[]
 {
-    "http://localhost:3000",
     "https://song-loma.com",
     "https://www.song-loma.com",
 };
